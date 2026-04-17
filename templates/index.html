@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraud Detection System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="page-wrapper">
+    <div class="dashboard-box">
+
+      <header class="main-header">
+        <h1>FRAUD DETECTION SYSTEM</h1>
+        <p>Real-time transaction monitoring and fraud analytics dashboard</p>
+      </header>
+
+      <section class="control-bar">
+        <button class="btn btn-start">Start Stream</button>
+        <button class="btn btn-stop">Stop Stream</button>
+      </section>
+
+      <section class="stats-grid">
+        <div class="stat-card">
+          <h3>Total Transactions</h3>
+          <p>{{ stats.total }}</p>
+        </div>
+        <div class="stat-card flagged">
+          <h3>Flagged</h3>
+          <p>{{ stats.flagged }}</p>
+        </div>
+        <div class="stat-card safe">
+          <h3>Safe</h3>
+          <p>{{ stats.safe }}</p>
+        </div>
+        <div class="stat-card review">
+          <h3>Under Review</h3>
+          <p>{{ stats.review }}</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Fraud Transaction Details</div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Txn ID</th>
+                <th>User</th>
+                <th>Amount</th>
+                <th>Location</th>
+                <th>Device</th>
+                <th>Time</th>
+                <th>Risk</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for txn in transactions %}
+              <tr>
+                <td>{{ txn.id }}</td>
+                <td>{{ txn.user }}</td>
+                <td>₹{{ txn.amount }}</td>
+                <td>{{ txn.location }}</td>
+                <td>{{ txn.device }}</td>
+                <td>{{ txn.time }}</td>
+                <td>
+                  <span class="badge 
+                    {% if txn.risk == 'High' %}high
+                    {% elif txn.risk == 'Medium' %}medium
+                    {% else %}low{% endif %}">
+                    {{ txn.risk }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status 
+                    {% if txn.status == 'Fraud Alert' %}fraud
+                    {% elif txn.status == 'Review' %}review
+                    {% else %}safe{% endif %}">
+                    {{ txn.status }}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel analytics-panel">
+        <div class="panel-title">K-Exploration Area</div>
+
+        <div class="analytics-content">
+          <div class="chart-box">
+            <h3>Fraud Pattern Overview</h3>
+            <div class="fake-chart">
+              <div class="bar b1"></div>
+              <div class="bar b2"></div>
+              <div class="bar b3"></div>
+              <div class="bar b4"></div>
+              <div class="bar b5"></div>
+            </div>
+          </div>
+
+          <div class="insight-box">
+            <h3>Insights / Analytics</h3>
+            <ul>
+              <li>High-risk transactions are mostly from unusual device switches.</li>
+              <li>Peak suspicious activity found during late evening hours.</li>
+              <li>Cross-city access and high amount combinations need review.</li>
+              <li>Machine learning risk scoring can be integrated here later.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+</body>
+</html>

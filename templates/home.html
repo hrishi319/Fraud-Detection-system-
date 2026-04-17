@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fraud Detection Dashboard - Dark Theme</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#0b1120;
+    padding:20px;
+    color:#e5e7eb;
+}
+
+.dashboard-box{
+    max-width:1350px;
+    margin:auto;
+    background:#111827;
+    border:1px solid #1f2937;
+    border-radius:18px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.45);
+    overflow:hidden;
+}
+
+.main-header{
+    background:linear-gradient(90deg,#020617,#1d4ed8);
+    color:#ffffff;
+    text-align:center;
+    padding:22px;
+    border-bottom:1px solid #1e293b;
+}
+
+.main-header p{
+    color:#cbd5e1;
+    margin-top:6px;
+}
+
+.control-bar{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    padding:16px;
+    background:#0f172a;
+    border-bottom:1px solid #1e293b;
+    flex-wrap:wrap;
+}
+
+.filter-bar{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    padding:0 16px 16px;
+    background:#0f172a;
+    border-bottom:1px solid #1e293b;
+    flex-wrap:wrap;
+}
+
+.btn{
+    padding:10px 22px;
+    border:none;
+    border-radius:8px;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    transition:0.3s ease;
+}
+
+.btn:hover{
+    transform:translateY(-2px);
+    opacity:0.95;
+}
+
+.btn:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+    transform:none;
+}
+
+.btn-start{ background:#16a34a; }
+.btn-stop{ background:#dc2626; }
+.btn-filter{ background:#334155; }
+
+.btn-filter.active{
+    background:#2563eb;
+    box-shadow:0 0 0 2px rgba(37,99,235,0.25);
+}
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    padding:16px;
+}
+
+.stat-card{
+    background:#1e293b;
+    border:1px solid #334155;
+    border-radius:12px;
+    text-align:center;
+    padding:16px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+.stat-card h3{
+    color:#93c5fd;
+    margin-bottom:8px;
+    font-size:18px;
+}
+
+.stat-card p{
+    font-size:28px;
+    font-weight:700;
+    color:#ffffff;
+}
+
+#messageBox{
+    margin:0 16px 16px;
+    padding:12px 14px;
+    border-radius:10px;
+    background:#111827;
+    border:1px solid #334155;
+    color:#cbd5e1;
+    font-weight:600;
+}
+
+.panel{
+    margin:16px;
+    border:1px solid #334155;
+    border-radius:14px;
+    overflow:hidden;
+    background:#0f172a;
+}
+
+.panel-title{
+    background:linear-gradient(90deg,#1d4ed8,#2563eb);
+    color:#fff;
+    padding:12px 14px;
+    font-weight:700;
+    letter-spacing:0.3px;
+}
+
+.table-wrapper{
+    max-height:400px;
+    overflow:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:#0f172a;
+}
+
+th,td{
+    padding:10px;
+    text-align:center;
+    border-bottom:1px solid #1e293b;
+}
+
+th{
+    background:#111827;
+    color:#93c5fd;
+    position:sticky;
+    top:0;
+    z-index:1;
+}
+
+td{
+    color:#e5e7eb;
+}
+
+.fraud-row{
+    background:rgba(220,38,38,0.12);
+}
+
+.safe-row{
+    background:rgba(22,163,74,0.12);
+}
+
+.review-row{
+    background:rgba(217,119,6,0.12);
+}
+
+.badge{
+    padding:5px 10px;
+    border-radius:999px;
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    display:inline-block;
+    min-width:72px;
+}
+
+.red{ background:#dc2626; }
+.green{ background:#16a34a; }
+.orange{ background:#d97706; }
+
+.k-body{
+    padding:16px;
+}
+
+.graph-area{
+    height:400px;
+    background:linear-gradient(180deg,#191b20 0%, #111317 100%);
+    border:1px solid #2a2f39;
+    border-radius:14px;
+    padding:12px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scrollbar-width:thin;
+    scrollbar-color:#334155 #0f172a;
+}
+
+.graph-area::-webkit-scrollbar{
+    height:12px;
+}
+
+.graph-area::-webkit-scrollbar-track{
+    background:#0f172a;
+    border-radius:10px;
+}
+
+.graph-area::-webkit-scrollbar-thumb{
+    background:#334155;
+    border-radius:10px;
+}
+
+.graph-area::-webkit-scrollbar-thumb:hover{
+    background:#475569;
+}
+
+.chart-scroll-wrap{
+    height:100%;
+    min-width:100%;
+    position:relative;
+}
+
+#fraudChart{
+    display:block;
+}
+
+.insight-list{
+    margin-top:20px;
+    line-height:1.8;
+    color:#cbd5e1;
+    background:#111827;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    padding:14px;
+}
+
+.empty-row td{
+    color:#94a3b8;
+    font-style:italic;
+}
+
+.table-wrapper::-webkit-scrollbar{
+    width:10px;
+    height:10px;
+}
+
+.table-wrapper::-webkit-scrollbar-track{
+    background:#0f172a;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb{
+    background:#334155;
+    border-radius:10px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover{
+    background:#475569;
+}
+
+@media(max-width:992px){
+    .stats-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    th,td{
+        font-size:13px;
+        padding:8px;
+    }
+}
+
+@media(max-width:576px){
+    body{
+        padding:10px;
+    }
+
+    .stats-grid{
+        grid-template-columns:1fr;
+    }
+
+    .control-bar,
+    .filter-bar{
+        flex-direction:column;
+        align-items:center;
+    }
+
+    .btn{
+        width:240px;
+    }
+
+    .graph-area{
+        height:320px;
+    }
+
+    .main-header h1{
+        font-size:22px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="dashboard-box">
+    <header class="main-header">
+        <h1>FRAUD DETECTION SYSTEM</h1>
+        <p>Real-time transaction monitoring dashboard</p>
+    </header>
+
+    <section class="control-bar">
+        <button id="startBtn" class="btn btn-start">Start Stream</button>
+        <button id="stopBtn" class="btn btn-stop" disabled>Stop Stream</button>
+    </section>
+
+    <section class="filter-bar">
+        <button id="showFraudBtn" class="btn btn-filter">Show Only Fraud Transaction</button>
+        <button id="showAllBtn" class="btn btn-filter active">Show All</button>
+    </section>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <h3>Total</h3>
+            <p id="totalCount">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Fraud</h3>
+            <p id="flaggedCount">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Safe</h3>
+            <p id="safeCount">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Review</h3>
+            <p id="reviewCount">0</p>
+        </div>
+    </section>
+
+    <div id="messageBox">System idle. Click Start Stream to begin live transaction data.</div>
+
+    <section class="panel">
+        <div class="panel-title">Fraud Transaction Details</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Txn ID</th>
+                        <th>User</th>
+                        <th>Amount</th>
+                        <th>Location</th>
+                        <th>Country</th>
+                        <th>Device</th>
+                        <th>Time</th>
+                        <th>Risk</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionBody">
+                    <tr class="empty-row">
+                        <td colspan="9">No live transactions yet. Click Start Stream.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-title">K-Exploration Area</div>
+        <div class="k-body">
+            <div class="graph-area" id="graphArea">
+                <div class="chart-scroll-wrap" id="chartScrollWrap">
+                    <canvas id="fraudChart"></canvas>
+                </div>
+            </div>
+            <div class="insight-list" id="insightBox">
+                • Live fraud analytics<br>
+                • Red line = fraud / review trend<br>
+                • Green line = safe trend<br>
+                • Stock-style graph with horizontal scroll enabled
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+let streamInterval = null;
+let currentFilter = "all";
+let allTransactions = [];
+
+const tbody = document.getElementById("transactionBody");
+const startBtn = document.getElementById("startBtn");
+const stopBtn = document.getElementById("stopBtn");
+const showFraudBtn = document.getElementById("showFraudBtn");
+const showAllBtn = document.getElementById("showAllBtn");
+const messageBox = document.getElementById("messageBox");
+const insightBox = document.getElementById("insightBox");
+const graphArea = document.getElementById("graphArea");
+const chartScrollWrap = document.getElementById("chartScrollWrap");
+const chartCanvas = document.getElementById("fraudChart");
+
+const chartLabels = [];
+const fraudLineData = [];
+const safeLineData = [];
+
+const ctx = chartCanvas.getContext("2d");
+
+function createGradient(colorTop, colorBottom){
+    const gradient = ctx.createLinearGradient(0, 0, 0, 340);
+    gradient.addColorStop(0, colorTop);
+    gradient.addColorStop(1, colorBottom);
+    return gradient;
+}
+
+const chart = new Chart(ctx,{
+    type:"line",
+    data:{
+        labels:chartLabels,
+        datasets:[
+            {
+                label:"Fraud / Review",
+                data:fraudLineData,
+                borderColor:"#dc2626",
+                backgroundColor:createGradient("rgba(220,38,38,0.30)", "rgba(220,38,38,0.02)"),
+                fill:true,
+                tension:0.28,
+                borderWidth:2.8,
+                pointRadius:0,
+                pointHoverRadius:4,
+                pointHitRadius:18
+            },
+            {
+                label:"Safe",
+                data:safeLineData,
+                borderColor:"#7fd49b",
+                backgroundColor:createGradient("rgba(127,212,155,0.26)", "rgba(127,212,155,0.02)"),
+                fill:true,
+                tension:0.28,
+                borderWidth:2.8,
+                pointRadius:0,
+                pointHoverRadius:4,
+                pointHitRadius:18
+            }
+        ]
+    },
+    options:{
+        responsive:false,
+        maintainAspectRatio:false,
+        interaction:{
+            mode:"index",
+            intersect:false
+        },
+        plugins:{
+            legend:{
+                display:false
+            },
+            tooltip:{
+                backgroundColor:"rgba(24,27,33,0.96)",
+                borderColor:"#2f3541",
+                borderWidth:1,
+                titleColor:"#ffffff",
+                bodyColor:"#e5e7eb",
+                displayColors:false,
+                padding:12,
+                callbacks:{
+                    title:function(items){
+                        return items[0].label || "";
+                    },
+                    label:function(context){
+                        return context.dataset.label + ": ₹" + Number(context.raw || 0).toLocaleString();
+                    }
+                }
+            }
+        },
+        layout:{
+            padding:{
+                left:10,
+                right:10,
+                top:8,
+                bottom:6
+            }
+        },
+        scales:{
+            x:{
+                ticks:{
+                    color:"#9cc3f5",
+                    maxRotation:0,
+                    autoSkip:true,
+                    autoSkipPadding:24,
+                    font:{
+                        size:12
+                    }
+                },
+                grid:{
+                    color:"rgba(255,255,255,0.06)",
+                    drawTicks:false
+                },
+                border:{
+                    display:false
+                }
+            },
+            y:{
+                position:"left",
+                min:0,
+                max:6000,
+                ticks:{
+                    color:"#9cc3f5",
+                    stepSize:2000,
+                    padding:8,
+                    callback:function(value){
+                        if(value === 0) return "0";
+                        if(value === 2000) return "2k";
+                        if(value === 4000) return "4k";
+                        if(value === 6000) return "6k";
+                        return "";
+                    }
+                },
+                grid:{
+                    color:"rgba(255,255,255,0.10)",
+                    drawTicks:false
+                },
+                border:{
+                    display:false
+                }
+            }
+        }
+    }
+});
+
+function updateChartSize(){
+    const totalPoints = Math.max(chartLabels.length, 10);
+    const widthPerPoint = 90;
+    const minCanvasWidth = graphArea.clientWidth - 24;
+    const calculatedWidth = Math.max(minCanvasWidth, totalPoints * widthPerPoint);
+
+    chartScrollWrap.style.width = calculatedWidth + "px";
+    chartCanvas.width = calculatedWidth;
+    chartCanvas.height = 350;
+    chart.resize();
+}
+
+function scrollGraphToEnd(){
+    graphArea.scrollLeft = graphArea.scrollWidth;
+}
+
+function formatTimeLabel(rawTime, index){
+    if(rawTime && typeof rawTime === "string"){
+        return rawTime;
+    }
+
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + index * 5);
+
+    return now.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+    }).toLowerCase();
+}
+
+startBtn.addEventListener("click",()=>{
+    if(streamInterval) return;
+
+    messageBox.textContent = "Live stream started successfully.";
+    messageBox.style.color = "#86efac";
+    messageBox.style.borderColor = "#14532d";
+    messageBox.style.background = "#052e16";
+
+    fetchAndUpdate();
+    streamInterval = setInterval(fetchAndUpdate,1500);
+
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+});
+
+stopBtn.addEventListener("click",()=>{
+    clearInterval(streamInterval);
+    streamInterval = null;
+
+    messageBox.textContent = "Live stream stopped.";
+    messageBox.style.color = "#fca5a5";
+    messageBox.style.borderColor = "#7f1d1d";
+    messageBox.style.background = "#450a0a";
+
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+});
+
+showFraudBtn.addEventListener("click",()=>{
+    currentFilter = "fraud";
+    showFraudBtn.classList.add("active");
+    showAllBtn.classList.remove("active");
+    renderTable();
+    renderChart();
+    updateInsight();
+});
+
+showAllBtn.addEventListener("click",()=>{
+    currentFilter = "all";
+    showAllBtn.classList.add("active");
+    showFraudBtn.classList.remove("active");
+    renderTable();
+    renderChart();
+    updateInsight();
+});
+
+window.addEventListener("resize",()=>{
+    updateChartSize();
+    chart.update();
+});
+
+function fetchAndUpdate(){
+    fetch("/get_transaction")
+    .then(res=>res.json())
+    .then(data=>{
+        allTransactions.unshift({
+            ...data.transaction,
+            risk: data.result.risk,
+            status: data.result.status,
+            color: data.result.color,
+            rowClass: data.result.rowClass
+        });
+
+        if(allTransactions.length > 100){
+            allTransactions.pop();
+        }
+
+        renderTable();
+        renderChart();
+        updateStats(data.stats);
+        updateInsight();
+    })
+    .catch(error=>{
+        console.error("Error fetching transaction:", error);
+        messageBox.textContent = "Error while fetching live data.";
+        messageBox.style.color = "#fca5a5";
+        messageBox.style.borderColor = "#7f1d1d";
+        messageBox.style.background = "#450a0a";
+    });
+}
+
+function getFilteredTransactions(){
+    if(currentFilter === "fraud"){
+        return allTransactions.filter(txn => txn.status === "Fraud");
+    }
+    return allTransactions;
+}
+
+function renderTable(){
+    tbody.innerHTML = "";
+
+    const filteredTransactions = getFilteredTransactions();
+
+    if(filteredTransactions.length === 0){
+        tbody.innerHTML = `
+            <tr class="empty-row">
+                <td colspan="9">${currentFilter === "fraud" ? "No fraud transactions found yet." : "No live transactions yet. Click Start Stream."}</td>
+            </tr>
+        `;
+        return;
+    }
+
+    filteredTransactions.forEach(txn=>{
+        const row = document.createElement("tr");
+        row.className = txn.rowClass;
+
+        row.innerHTML = `
+            <td>${txn.id}</td>
+            <td>${txn.user}</td>
+            <td>₹${Number(txn.amount).toLocaleString()}</td>
+            <td>${txn.location}</td>
+            <td>${txn.country}</td>
+            <td>${txn.device}</td>
+            <td>${txn.time}</td>
+            <td><span class="badge ${txn.color}">${txn.risk}</span></td>
+            <td><span class="badge ${txn.color}">${txn.status}</span></td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+function updateStats(stats){
+    document.getElementById("totalCount").textContent = stats.total;
+    document.getElementById("flaggedCount").textContent = stats.flagged;
+    document.getElementById("safeCount").textContent = stats.safe;
+    document.getElementById("reviewCount").textContent = stats.review;
+}
+
+function renderChart(){
+    const filteredTransactions = [...getFilteredTransactions()].reverse();
+
+    chartLabels.length = 0;
+    fraudLineData.length = 0;
+    safeLineData.length = 0;
+
+    filteredTransactions.forEach((txn, index)=>{
+        chartLabels.push(formatTimeLabel(txn.time, index));
+
+        const amount = Number(txn.amount);
+
+        if(currentFilter === "fraud"){
+            fraudLineData.push(Math.min(amount, 6000));
+            safeLineData.push(null);
+        } else {
+            if(txn.status === "Fraud"){
+                fraudLineData.push(Math.min(amount, 6000));
+                safeLineData.push(Math.min(Math.round(amount * 0.52), 6000));
+            } else if(txn.status === "Review"){
+                fraudLineData.push(Math.min(Math.round(amount * 0.78), 6000));
+                safeLineData.push(Math.min(Math.round(amount * 0.60), 6000));
+            } else {
+                fraudLineData.push(Math.min(Math.round(amount * 0.36), 6000));
+                safeLineData.push(Math.min(amount, 6000));
+            }
+        }
+    });
+
+    updateChartSize();
+    chart.update();
+    scrollGraphToEnd();
+}
+
+function updateInsight(){
+    const filteredTransactions = getFilteredTransactions();
+
+    if(filteredTransactions.length === 0){
+        insightBox.innerHTML = `
+            • ${currentFilter === "fraud" ? "No fraud transactions available yet" : "No live transactions available yet"}<br>
+            • Start stream to see live updates<br>
+            • Red line shows fraud/review movement<br>
+            • Green line shows safe movement
+        `;
+        return;
+    }
+
+    const latest = filteredTransactions[0];
+
+    if(currentFilter === "fraud"){
+        insightBox.innerHTML = `
+            • Fraud-only mode is active<br>
+            • Latest fraud ID: <b>${latest.id}</b><br>
+            • User: <b>${latest.user}</b><br>
+            • Amount: <b>₹${Number(latest.amount).toLocaleString()}</b><br>
+            • Country: <b>${latest.country}</b><br>
+            • Stock-style graph shows only fraud trend
+        `;
+        return;
+    }
+
+    if(latest.status === "Fraud"){
+        insightBox.innerHTML = `
+            • Latest alert: <b>${latest.id}</b> marked as <b style="color:#dc2626;">Fraud</b><br>
+            • User: <b>${latest.user}</b><br>
+            • Amount: <b>₹${Number(latest.amount).toLocaleString()}</b><br>
+            • Country: <b>${latest.country}</b><br>
+            • Red and green stock-style graph is live
+        `;
+    } else if(latest.status === "Review"){
+        insightBox.innerHTML = `
+            • Latest alert: <b>${latest.id}</b> marked as <b style="color:#fbbf24;">Review</b><br>
+            • User: <b>${latest.user}</b><br>
+            • Amount: <b>₹${Number(latest.amount).toLocaleString()}</b><br>
+            • Country: <b>${latest.country}</b><br>
+            • Review transaction included in red trend
+        `;
+    } else {
+        insightBox.innerHTML = `
+            • Latest transaction: <b>${latest.id}</b> marked as <b style="color:#16a34a;">Safe</b><br>
+            • User: <b>${latest.user}</b><br>
+            • Amount: <b>₹${Number(latest.amount).toLocaleString()}</b><br>
+            • Country: <b>${latest.country}</b><br>
+            • Safe transaction included in green trend
+        `;
+    }
+}
+
+updateChartSize();
+</script>
+
+</body>
+</html>
