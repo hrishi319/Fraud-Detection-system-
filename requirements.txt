@@ -1,0 +1,26 @@
+# Core data
+pandas==2.2.2
+numpy==1.26.4
+
+# ML
+scikit-learn==1.4.2
+xgboost==2.0.3
+imbalanced-learn==0.12.3
+
+# Visualisation
+matplotlib==3.8.4
+seaborn==0.13.2
+plotly==5.22.0
+
+# Agentic layer
+langchain==0.2.6
+langgraph==0.1.14
+anthropic==0.28.0
+
+# Utilities
+python-dotenv==1.0.1
+joblib==1.4.2
+tqdm==4.66.4
+
+# Notebook
+ipykernel==6.29.4

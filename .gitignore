@@ -1,0 +1,26 @@
+# Environment
+.env
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Data (too large for git)
+data/raw/
+data/processed/
+
+# Saved models
+models/*.pkl
+models/*.json
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
