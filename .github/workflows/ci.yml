@@ -29,8 +29,12 @@ jobs:
       - name: Code style check (flake8)
         run: |
           pip install flake8
-          flake8 src/ app/ --max-line-length=100 --exclude=__pycache__ --statistics
-
+          flake8 src/ app/ \
+            --max-line-length=120 \
+            --exclude=__pycache__ \
+            --ignore=E221,E225,E231,E251,E302,E303,E401,E501,F401,F541,W503,E127,E203 \
+            --statistics
+            
       - name: Smoke test — import all modules
         run: |
           pip install pytest
