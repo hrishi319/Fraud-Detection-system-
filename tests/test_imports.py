@@ -22,8 +22,8 @@ def test_import_preprocessor():
     assert callable(preprocess)
 
 def test_import_train():
-    from src.models.train import train
-    assert callable(train)
+    from src.models.train import train_model
+    assert callable(train_model)
 
 def test_import_evaluate():
     from src.models.evaluate import evaluate
