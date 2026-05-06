@@ -1,0 +1,31 @@
+# Never include in Docker image
+.env
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Data — too large, not needed at runtime
+data/
+
+# Notebooks — not needed in production image
+notebooks/
+*.ipynb
+
+# MLflow runs — not needed in image
+mlruns/
+
+# Reports
+reports/
+
+# Git
+.git/
+.gitignore
+
+# Tests
+tests/
+
+# VS Code
+.vscode/

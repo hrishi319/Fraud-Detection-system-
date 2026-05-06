@@ -24,3 +24,7 @@ Thumbs.db
 
 # VS Code
 .vscode/
+mlruns/
+reports/*.html
+reports/figures/
+reports/drift_results.json
