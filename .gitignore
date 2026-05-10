@@ -13,6 +13,7 @@ data/processed/
 # Saved models
 models/*.pkl
 models/*.json
+!models/.gitkeep
 
 # Jupyter
 .ipynb_checkpoints/
