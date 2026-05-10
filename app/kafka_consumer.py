@@ -1,15 +1,31 @@
 from confluent_kafka import Consumer
 import json
 import requests
+import time
+import os
 
-consumer = Consumer({
-    'bootstrap.servers': '127.0.0.1:9092',
-    'group.id': 'fraud-detection-group',
-    'auto.offset.reset': 'earliest'
-})
+KAFKA_BROKER = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092")
+API_URL      = os.getenv("API_URL", "http://127.0.0.1:8000")
 
-consumer.subscribe(['transactions'])
+def create_consumer():
+    retries = 0
+    while retries < 10:
+        try:
+            consumer = Consumer({
+                'bootstrap.servers': KAFKA_BROKER,
+                'group.id': 'fraud-detection-group',
+                'auto.offset.reset': 'earliest'
+            })
+            consumer.subscribe(['transactions'])
+            print(f"Kafka Consumer Connected to {KAFKA_BROKER}!")
+            return consumer
+        except Exception as e:
+            print(f"Waiting for Kafka... attempt {retries+1}/10 ({e})")
+            retries += 1
+            time.sleep(5)
+    raise Exception("Could not connect to Kafka after 10 attempts")
 
+consumer = create_consumer()
 print("Kafka Consumer Started...")
 
 while True:
@@ -24,11 +40,9 @@ while True:
 
     try:
         response = requests.post(
-            "http://127.0.0.1:8000/predict",
+            f"{API_URL}/predict",
             json=data
         )
-        print("STATUS:", response.status_code)
-        print("RESPONSE:", response.text)  # Add this line
         result = response.json()
         print("=" * 60)
         print("TRANSACTION:", result["transaction_id"])
@@ -39,3 +53,4 @@ while True:
 
     except Exception as e:
         print("Error:", e)
+        

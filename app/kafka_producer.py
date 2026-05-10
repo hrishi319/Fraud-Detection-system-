@@ -3,23 +3,53 @@ import pandas as pd
 import json
 import time
 import uuid
+import os
 
-df = pd.read_excel("data/transactions_real.xlsx")
+# ── Config ────────────────────────────────────────────────────────────────────
+KAFKA_BROKER = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092")
+KAFKA_TOPIC  = os.getenv("KAFKA_TOPIC", "transactions")
+DATA_PATH    = os.getenv("DATA_PATH", "data/transactions_real.xlsx")
 
-# Frequency encode a column
+print(f"Connecting to Kafka broker: {KAFKA_BROKER}")
+print(f"Publishing to topic: {KAFKA_TOPIC}")
+print(f"Reading data from: {DATA_PATH}")
+
+# ── Load data ─────────────────────────────────────────────────────────────────
+df = pd.read_excel(DATA_PATH)
+print(f"Loaded {len(df)} transactions from Excel")
+
+
+# ── Frequency encode a column ─────────────────────────────────────────────────
 def freq_encode(series, value):
     counts = series.value_counts(normalize=True)
     return float(counts.get(value, 0.0))
 
-producer = Producer({
-    'bootstrap.servers': '127.0.0.1:9092'
-})
 
+# ── Producer with retry ───────────────────────────────────────────────────────
+def create_producer(retries=10):
+    for attempt in range(retries):
+        try:
+            p = Producer({'bootstrap.servers': KAFKA_BROKER})
+            print(f"Producer connected to {KAFKA_BROKER}")
+            return p
+        except Exception as e:
+            print(f"Waiting for Kafka... attempt {attempt+1}/{retries} ({e})")
+            time.sleep(5)
+    raise Exception("Could not connect to Kafka after multiple attempts")
+
+
+producer = create_producer()
+
+# ── Delivery report ───────────────────────────────────────────────────────────
 def delivery_report(err, msg):
     if err:
         print(f"Delivery failed: {err}")
     else:
         print(f"Sent to {msg.topic()} [{msg.partition()}]")
+        
+
+# ── Main loop ─────────────────────────────────────────────────────────────────
+print("Producer started — sending transactions...")
 
 while True:
     for _, row in df.iterrows():
@@ -45,7 +75,7 @@ while True:
         }
 
         producer.produce(
-            "transactions",
+            KAFKA_TOPIC,
             value=json.dumps(data, default=str).encode('utf-8'),
             callback=delivery_report
         )
@@ -55,3 +85,4 @@ while True:
         time.sleep(1)
 
     producer.flush()
+    print("Completed one full cycle — restarting...")
