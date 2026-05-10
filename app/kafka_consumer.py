@@ -25,6 +25,7 @@ def create_consumer():
             time.sleep(5)
     raise Exception("Could not connect to Kafka after 10 attempts")
 
+
 consumer = create_consumer()
 print("Kafka Consumer Started...")
 
