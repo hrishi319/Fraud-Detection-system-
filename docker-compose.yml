@@ -1,0 +1,114 @@
+services:
+
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    networks:
+      - fraud-network
+
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+    container_name: fraud-api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: on-failure
+    networks:
+      - fraud-network
+
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+    container_name: fraud-consumer
+    command: python app/kafka_consumer.py
+    env_file: .env
+    environment:
+      - API_URL=https://fraud-api-9nb9.onrender.com  # ← Render API
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    restart: on-failure
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - fraud-network
+
+
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+    container_name: fraud-producer
+    command: python app/kafka_producer.py
+    env_file: .env
+    environment:
+      - DATA_PATH=data/transactions_real.xlsx
+      - API_HOST=fraud-api-9nb9.onrender.com         # ← Render API
+      - API_PORT=443
+      - USE_HTTPS=true
+    volumes:
+      - ./data:/app/data
+    restart: on-failure
+    networks:
+      - fraud-network
+
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+      network: host
+    container_name: fraud-dashboard
+    ports:
+      - "8501:8501"
+    env_file: .env
+    environment:
+      - API_HOST=fraud-api-9nb9.onrender.com         # ← Render API
+      - API_PORT=443
+    restart: on-failure
+    networks:
+      - fraud-network
+
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: on-failure
+    networks:
+      - fraud-network
+
+
+networks:
+  fraud-network:
+    driver: bridge
