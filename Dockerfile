@@ -19,8 +19,12 @@ RUN pip install --no-cache-dir --timeout=300 --retries=5 -r requirements.txt
 COPY app/        ./app/
 COPY src/        ./src/
 RUN mkdir -p ./models
-COPY models/     ./models/
-
+#COPY models/     ./models/
+RUN mkdir -p ./models && \
+    curl -L -o ./models/xgboost_model.pkl \
+    https://github.com/hrishi319/CC_Fraud_Detection_System/releases/download/v1.0/xgboost_model.pkl && \
+    curl -L -o ./models/scaler.pkl \
+    https://github.com/hrishi319/CC_Fraud_Detection_System/releases/download/v1.0/scaler.pkl
 # ── Environment ────────────────────────────────────────────────────────────────
 ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
