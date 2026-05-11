@@ -1,49 +1,50 @@
-# Core data
+# ── Core data ──────────────────────────────────────────────────────────────────
 pandas==2.2.2
 numpy==1.26.4
+openpyxl==3.1.5
 
-# ML
+# ── ML ─────────────────────────────────────────────────────────────────────────
 scikit-learn==1.4.2
 xgboost==2.0.3
 imbalanced-learn==0.12.3
-
-
-######### Mac User >> Before installing lightgbm, make sure you have the following dependencies installed:###### 
-# for mac users, firts install 
-# 1. /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-# 2. echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-#    eval "$(/opt/homebrew/bin/brew shellenv)"
-# 3. brew install libomp
-
 lightgbm==4.3.0
+shap==0.45.0
+joblib==1.4.2
+
+# ── Experiment tracking ────────────────────────────────────────────────────────
 mlflow==3.12.0
 
-# Visualisation
+# ── Dashboard ──────────────────────────────────────────────────────────────────
+streamlit==1.45.0
+plotly==5.22.0
 matplotlib==3.8.4
 seaborn==0.13.2
-plotly==5.22.0
 
-# Agentic layer
+# ── Agentic layer ──────────────────────────────────────────────────────────────
 langchain==0.2.6
 langgraph==0.1.14
 anthropic==0.28.0
 httpx==0.27.0
 
-# Utilities
-python-dotenv==1.0.1
-joblib==1.4.2
-tqdm==4.66.4
+# ── Kafka ──────────────────────────────────────────────────────────────────────
+confluent-kafka==2.14.0
 
-# Notebook
-ipykernel==6.29.4
-
-#Agentic layer
-langgraph==0.1.14
-shap==0.45.0
-
-
-#Fast, Docker,prometheus
+# ── FastAPI + API layer ────────────────────────────────────────────────────────
 fastapi==0.111.0
 uvicorn==0.30.1
 pydantic==2.7.4
+python-multipart==0.0.27
+starlette==0.37.2
+
+# ── Prometheus ─────────────────────────────────────────────────────────────────
 prometheus-client==0.20.0
+
+# ── WebSocket ──────────────────────────────────────────────────────────────────
+websocket-client==1.9.0
+
+# ── Utilities ──────────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+requests==2.33.1
+tqdm==4.66.4
+pyyaml==6.0.3
+packaging==24.2
