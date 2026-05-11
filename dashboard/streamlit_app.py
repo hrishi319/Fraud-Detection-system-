@@ -11,9 +11,20 @@ import threading
 import queue
 import time
 import requests
+import os
 import random
 from datetime import datetime, timedelta
 from collections import deque
+
+# ─────────────────────────────────────────────
+# ENVIRONMENT CONFIG
+# ─────────────────────────────────────────────
+API_HOST = os.getenv("API_HOST", "127.0.0.1")
+API_PORT = os.getenv("API_PORT", "8000")
+#API_URL  = f"http://{API_HOST}:{API_PORT}"
+#WS_URL   = f"ws://{API_HOST}:{API_PORT}/ws"
+API_URL  = f"https://{API_HOST}"
+WS_URL   = f"wss://{API_HOST}/ws"
 
 # ─────────────────────────────────────────────
 # PAGE CONFIG
@@ -36,7 +47,6 @@ st.markdown("""
 #MainMenu, footer, header { visibility: hidden; }
 [data-testid="stToolbar"] { display: none; }
 
-/* ── TAB STYLING ── */
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
     background: transparent !important;
     gap: 0.5rem;
@@ -61,55 +71,30 @@ st.markdown("""
     border-bottom: 2px solid #3b82f6 !important;
 }
 
-/* ── DARK TAB (Live Monitor) ── */
-.dark-tab {
-    background: #0a0e1a;
-    padding: 1.5rem;
-    border-radius: 0 12px 12px 12px;
-    min-height: 80vh;
-}
+[data-testid="stTabsContent"] { padding: 0 !important; }
+section[data-testid="stMain"] > div { padding-top: 0.5rem !important; }
 
-/* ── LIGHT TAB (MLOps) ── */
-.light-tab {
-    background: #f8fafc;
-    padding: 1.5rem;
-    border-radius: 0 12px 12px 12px;
-    min-height: 80vh;
-}
-
-/* ════════════════════════════════
-   DARK THEME — LIVE MONITOR
-════════════════════════════════ */
+/* ════ DARK THEME — LIVE MONITOR ════ */
 .fraud-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 0;
-    border-bottom: 1px solid rgba(99,179,237,0.2);
-    margin-bottom: 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 0; border-bottom: 1px solid rgba(99,179,237,0.2); margin-bottom: 1.5rem;
 }
 
 .fraud-logo {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.8rem;
-    font-weight: 800;
+    font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800;
     letter-spacing: -0.03em;
     background: linear-gradient(135deg, #63b3ed, #90cdf4);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
-
 .fraud-logo span { color: #fc8181; -webkit-text-fill-color: #fc8181; }
 
 .live-badge {
     display: flex; align-items: center; gap: 0.5rem;
     border-radius: 2rem; padding: 0.3rem 0.8rem;
-    font-size: 0.7rem; font-family: 'Space Mono', monospace;
-    letter-spacing: 0.1em;
+    font-size: 0.7rem; font-family: 'Space Mono', monospace; letter-spacing: 0.1em;
 }
 .live-badge.connected  { background: rgba(72,187,120,0.1); border: 1px solid rgba(72,187,120,0.3); color: #68d391; }
 .live-badge.connecting { background: rgba(246,224,94,0.1);  border: 1px solid rgba(246,224,94,0.3);  color: #f6e05e; }
-
 .live-dot { width:8px; height:8px; border-radius:50%; animation: pulse 1.5s infinite; }
 .connected  .live-dot { background: #68d391; }
 .connecting .live-dot { background: #f6e05e; }
@@ -120,12 +105,9 @@ st.markdown("""
 }
 
 .metric-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
-
 .metric-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px; padding: 1.2rem 1.4rem;
-    position: relative; overflow: hidden;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 1.2rem 1.4rem; position: relative; overflow: hidden;
 }
 .metric-card::before {
     content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:12px 12px 0 0;
@@ -144,7 +126,6 @@ st.markdown("""
 .metric-sub { font-size:0.65rem; color:#4a5568; font-family:'Space Mono',monospace; }
 
 .feed-container { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px; overflow:hidden; }
-
 .txn-row {
     display:grid; grid-template-columns:2fr 1fr 1fr 1.2fr 1fr;
     align-items:center; padding:0.8rem 1.4rem;
@@ -154,34 +135,26 @@ st.markdown("""
 .txn-row.fraud { background:rgba(252,129,129,0.04); }
 .txn-id   { color:#63b3ed; font-weight:700; letter-spacing:0.05em; }
 .txn-prob { color:#e2e8f0; }
-
 .risk-badge { display:inline-block; padding:0.2rem 0.6rem; border-radius:4px; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; }
 .risk-HIGH   { background:rgba(252,129,129,0.15); color:#fc8181; border:1px solid rgba(252,129,129,0.3); }
 .risk-MEDIUM { background:rgba(246,224,94,0.12);  color:#f6e05e; border:1px solid rgba(246,224,94,0.3); }
 .risk-LOW    { background:rgba(104,211,145,0.12); color:#68d391; border:1px solid rgba(104,211,145,0.3); }
-
 .pred-fraud { color:#fc8181; font-weight:700; }
 .pred-legit { color:#68d391; }
 .txn-time   { color:#4a5568; font-size:0.65rem; }
-
 .section-title { font-family:'Syne',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:#4a5568; margin-bottom:0.8rem; }
-
 .empty-state { text-align:center; padding:3rem; color:#2d3748; font-family:'Space Mono',monospace; font-size:0.8rem; }
-
 .fraud-alert {
     background:rgba(252,129,129,0.08); border:1px solid rgba(252,129,129,0.3);
     border-left:3px solid #fc8181; border-radius:8px;
     padding:0.8rem 1.2rem; margin-bottom:1rem;
     font-size:0.75rem; color:#fc8181; font-family:'Space Mono',monospace;
 }
-
 .stats-panel { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:1.2rem; }
-
 .stat-row { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.7rem; font-family:'Space Mono',monospace; }
 .stat-row:last-child { border-bottom:none; }
 .stat-key { color:#718096; }
 .stat-val { color:#e2e8f0; font-weight:700; }
-
 .progress-wrap { margin:0.4rem 0 0.8rem; }
 .progress-bar-bg { background:rgba(255,255,255,0.06); border-radius:4px; height:4px; overflow:hidden; }
 .progress-bar-fill { height:100%; border-radius:4px; }
@@ -189,53 +162,29 @@ st.markdown("""
 .fill-green  { background:linear-gradient(90deg,#68d391,#48bb78); }
 .fill-yellow { background:linear-gradient(90deg,#f6e05e,#ecc94b); }
 
-/* ════════════════════════════════
-   LIGHT THEME — MLOPS
-════════════════════════════════ */
+/* ════ LIGHT THEME — MLOPS ════ */
 .mlops-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 1rem 0 1.2rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem;
 }
-
-.mlops-title {
-    font-family: 'DM Sans', sans-serif; font-size: 1.5rem; font-weight: 600;
-    color: #ffffff; letter-spacing: -0.02em;
-}
-
+.mlops-title { font-family: 'DM Sans', sans-serif; font-size: 1.5rem; font-weight: 600; color: #0f172a; letter-spacing: -0.02em; }
 .mlops-title span { color: #3b82f6; }
-
 .mlops-subtitle { font-family:'DM Sans',sans-serif; font-size:0.8rem; color:#94a3b8; margin-top:0.2rem; }
-
-.status-pill {
-    display:flex; align-items:center; gap:0.4rem;
-    padding:0.35rem 0.9rem; border-radius:2rem;
-    font-family:'DM Mono',monospace; font-size:0.7rem; font-weight:500;
-}
-.status-pill.ok      { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
-.status-pill.warn    { background:#fef9c3; color:#a16207; border:1px solid #fde68a; }
-.status-pill.error   { background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; }
+.status-pill { display:flex; align-items:center; gap:0.4rem; padding:0.35rem 0.9rem; border-radius:2rem; font-family:'DM Mono',monospace; font-size:0.7rem; font-weight:500; }
+.status-pill.ok    { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+.status-pill.warn  { background:#fef9c3; color:#a16207; border:1px solid #fde68a; }
+.status-pill.error { background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; }
 .status-dot { width:7px; height:7px; border-radius:50%; }
 .ok .status-dot    { background:#16a34a; }
 .warn .status-dot  { background:#ca8a04; }
 .error .status-dot { background:#dc2626; }
-
-/* MLOps metric cards */
 .ml-metric-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
-
-.ml-card {
-    background:#ffffff; border:1px solid #e2e8f0; border-radius:12px;
-    padding:1.2rem 1.4rem; box-shadow:0 1px 3px rgba(0,0,0,0.06);
-    position:relative; overflow:hidden;
-}
-
-.ml-card-accent {
-    position:absolute; top:0; left:0; bottom:0; width:3px; border-radius:12px 0 0 12px;
-}
-.accent-blue   { background:#3b82f6; }
-.accent-emerald{ background:#10b981; }
-.accent-amber  { background:#f59e0b; }
-.accent-rose   { background:#f43f5e; }
-
+.ml-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:1.2rem 1.4rem; box-shadow:0 1px 3px rgba(0,0,0,0.06); position:relative; overflow:hidden; }
+.ml-card-accent { position:absolute; top:0; left:0; bottom:0; width:3px; border-radius:12px 0 0 12px; }
+.accent-blue    { background:#3b82f6; }
+.accent-emerald { background:#10b981; }
+.accent-amber   { background:#f59e0b; }
+.accent-rose    { background:#f43f5e; }
 .ml-card-label { font-family:'DM Sans',sans-serif; font-size:0.7rem; font-weight:500; color:#94a3b8; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.4rem; }
 .ml-card-value { font-family:'DM Sans',sans-serif; font-size:1.8rem; font-weight:600; color:#0f172a; line-height:1; }
 .ml-card-sub   { font-family:'DM Mono',monospace; font-size:0.65rem; color:#94a3b8; margin-top:0.3rem; }
@@ -243,39 +192,19 @@ st.markdown("""
 .delta-up   { color:#16a34a; }
 .delta-down { color:#dc2626; }
 .delta-flat { color:#94a3b8; }
-
-/* Infrastructure cards */
 .infra-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem; }
-
-.infra-card {
-    background:#ffffff; border:1px solid #e2e8f0; border-radius:12px;
-    padding:1.2rem; box-shadow:0 1px 3px rgba(0,0,0,0.06);
-}
-
+.infra-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:1.2rem; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
 .infra-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
 .infra-card-title  { font-family:'DM Sans',sans-serif; font-size:0.85rem; font-weight:600; color:#1e293b; }
-.infra-card-icon   { font-size:1.2rem; }
-
 .infra-stat { display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px solid #f1f5f9; font-size:0.72rem; }
 .infra-stat:last-child { border-bottom:none; }
 .infra-key { font-family:'DM Sans',sans-serif; color:#64748b; }
 .infra-val { font-family:'DM Mono',monospace; color:#1e293b; font-weight:500; }
-
-/* Section headers */
-.ml-section-header {
-    font-family:'DM Sans',sans-serif; font-size:0.75rem; font-weight:600;
-    color:#64748b; text-transform:uppercase; letter-spacing:0.12em;
-    margin-bottom:0.8rem; padding-bottom:0.4rem;
-    border-bottom:1px solid #e2e8f0;
-}
-
-/* Trend chart bars */
+.ml-section-header { font-family:'DM Sans',sans-serif; font-size:0.75rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.12em; margin-bottom:0.8rem; padding-bottom:0.4rem; border-bottom:1px solid #e2e8f0; }
 .trend-bar-wrap { display:flex; align-items:flex-end; gap:3px; height:60px; margin:0.5rem 0; }
-.trend-bar { flex:1; border-radius:3px 3px 0 0; min-height:4px; transition:height 0.3s; }
+.trend-bar { flex:1; border-radius:3px 3px 0 0; min-height:4px; }
 .bar-fraud { background:#f43f5e; opacity:0.8; }
 .bar-legit { background:#10b981; opacity:0.6; }
-
-/* Alert log */
 .alert-log { background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
 .alert-row { display:flex; align-items:center; gap:1rem; padding:0.7rem 1rem; border-bottom:1px solid #f1f5f9; font-size:0.72rem; }
 .alert-row:last-child { border-bottom:none; }
@@ -285,11 +214,6 @@ st.markdown("""
 .badge-warning  { background:#fef9c3; color:#92400e; }
 .badge-info     { background:#dbeafe; color:#1d4ed8; }
 .alert-msg { font-family:'DM Sans',sans-serif; color:#334155; flex:1; }
-
-/* Model health gauge */
-.gauge-wrap { text-align:center; padding:1rem; }
-.gauge-value { font-family:'DM Sans',sans-serif; font-size:2.5rem; font-weight:700; }
-.gauge-label { font-family:'DM Sans',sans-serif; font-size:0.75rem; color:#94a3b8; margin-top:0.3rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -302,11 +226,10 @@ if "ws_thread"     not in st.session_state: st.session_state.ws_thread     = Non
 if "ws_connected"  not in st.session_state: st.session_state.ws_connected  = False
 if "latest_fraud"  not in st.session_state: st.session_state.latest_fraud  = None
 if "latency_hist"  not in st.session_state: st.session_state.latency_hist  = deque(maxlen=20)
-if "hourly_counts" not in st.session_state: st.session_state.hourly_counts = deque(maxlen=12)
 if "alert_log"     not in st.session_state: st.session_state.alert_log     = deque(maxlen=10)
 
 # ─────────────────────────────────────────────
-# WEBSOCKET
+# WEBSOCKET — reads from env var
 # ─────────────────────────────────────────────
 def start_ws(msg_q):
     def on_message(ws, message):
@@ -317,14 +240,18 @@ def start_ws(msg_q):
         except Exception:
             pass
 
-    def on_open(ws):   msg_q.put(("connected", True))
+    def on_open(ws):      msg_q.put(("connected", True))
     def on_close(ws, *a): msg_q.put(("connected", False))
     def on_error(ws, e):  msg_q.put(("connected", False))
 
+    print(f"Connecting to WebSocket: {WS_URL}")
+
     ws_app = websocket.WebSocketApp(
-        "ws://127.0.0.1:8000/ws",
-        on_message=on_message, on_open=on_open,
-        on_close=on_close, on_error=on_error
+        WS_URL,
+        on_message=on_message,
+        on_open=on_open,
+        on_close=on_close,
+        on_error=on_error
     )
     ws_app.run_forever(reconnect=3)
 
@@ -357,7 +284,7 @@ while not st.session_state.msg_queue.empty() and drained < 50:
                 st.session_state.alert_log.appendleft({
                     "time": datetime.now().strftime("%H:%M:%S"),
                     "level": "info",
-                    "msg": "WebSocket connected to FastAPI"
+                    "msg": f"WebSocket connected to FastAPI at {WS_URL}"
                 })
         drained += 1
     except queue.Empty:
@@ -377,17 +304,16 @@ medium_risk = sum(1 for t in txns if t.get("risk_level") == "MEDIUM")
 low_risk    = sum(1 for t in txns if t.get("risk_level") == "LOW")
 badge_class = "connected" if st.session_state.ws_connected else "connecting"
 badge_text  = "CONNECTED" if st.session_state.ws_connected else "CONNECTING..."
-
 latencies   = list(st.session_state.latency_hist)
 avg_latency = sum(latencies) / len(latencies) if latencies else 0
 max_latency = max(latencies) if latencies else 0
 
 # ─────────────────────────────────────────────
-# INFRA HEALTH CHECK
+# INFRA HEALTH CHECK — reads from env var
 # ─────────────────────────────────────────────
 def check_api_health():
     try:
-        r = requests.get("http://127.0.0.1:8000/health", timeout=2)
+        r = requests.get(f"{API_URL}/health", timeout=2)
         return r.status_code == 200, r.json()
     except:
         return False, {}
@@ -400,18 +326,15 @@ api_ok, api_data = check_api_health()
 tab1, tab2 = st.tabs(["🛡️  Live Monitor", "⚙️  MLOps Console"])
 
 # ══════════════════════════════════════════════
-# TAB 1 — LIVE MONITOR (dark)
+# TAB 1 — LIVE MONITOR
 # ══════════════════════════════════════════════
 with tab1:
     st.markdown('<div style="background:#0a0e1a;padding:1.5rem;border-radius:12px;">', unsafe_allow_html=True)
 
-    # Header
     st.markdown(f"""
     <div class="fraud-header">
-        <div>
-            <div class="fraud-logo">Fraud<span>Shield</span>
-                <span style="font-size:0.9rem;font-weight:400;color:#4a5568;">· Live Monitor</span>
-            </div>
+        <div class="fraud-logo">Fraud<span>Shield</span>
+            <span style="font-size:0.9rem;font-weight:400;color:#4a5568;">· Live Monitor</span>
         </div>
         <div class="live-badge {badge_class}">
             <div class="live-dot"></div>{badge_text}
@@ -419,7 +342,6 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
-    # Fraud alert
     if st.session_state.latest_fraud:
         f = st.session_state.latest_fraud
         st.markdown(f"""
@@ -429,7 +351,6 @@ with tab1:
             &nbsp;·&nbsp; {f.get('timestamp','')}
         </div>""", unsafe_allow_html=True)
 
-    # Metric cards
     st.markdown(f"""
     <div class="metric-grid">
         <div class="metric-card blue">
@@ -526,19 +447,19 @@ with tab1:
 
 
 # ══════════════════════════════════════════════
-# TAB 2 — MLOPS CONSOLE (light)
+# TAB 2 — MLOPS CONSOLE
 # ══════════════════════════════════════════════
 with tab2:
     st.markdown('<div style="background:#f8fafc;padding:1.5rem;border-radius:12px;">', unsafe_allow_html=True)
 
-    # ── Header
     overall_status = "ok" if api_ok and st.session_state.ws_connected else "warn"
     overall_label  = "All Systems Operational" if overall_status == "ok" else "Degraded — Check Services"
+
     st.markdown(f"""
     <div class="mlops-header">
         <div>
             <div class="mlops-title">MLOps <span>Console</span></div>
-            <div class="mlops-subtitle">FraudShield · Real-Time Fraud Detection System · {datetime.now().strftime('%d %b %Y, %H:%M')}</div>
+            <div class="mlops-subtitle">FraudShield · {datetime.now().strftime('%d %b %Y, %H:%M')} · API: {API_URL}</div>
         </div>
         <div class="status-pill {overall_status}">
             <div class="status-dot"></div>{overall_label}
@@ -546,12 +467,11 @@ with tab2:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── MODEL PERFORMANCE
     st.markdown('<div class="ml-section-header">📊 Model Performance</div>', unsafe_allow_html=True)
 
-    precision = 1 - (fraud_rate / 100 * 0.05) if total > 0 else 0.94
-    recall    = 0.91 + (fraud_count / max(total, 1) * 0.03)
-    f1        = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+    precision   = 1 - (fraud_rate / 100 * 0.05) if total > 0 else 0.94
+    recall      = 0.91 + (fraud_count / max(total, 1) * 0.03)
+    f1          = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
     drift_score = min(abs(avg_prob - 0.15) * 2, 1.0)
 
     st.markdown(f"""
@@ -587,16 +507,14 @@ with tab2:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── INFRASTRUCTURE HEALTH
     st.markdown('<div class="ml-section-header">🔧 Infrastructure Health</div>', unsafe_allow_html=True)
 
-    api_status   = "ok"    if api_ok else "error"
-    api_label    = "Healthy" if api_ok else "Down"
-    ws_status    = "ok"    if st.session_state.ws_connected else "warn"
+    api_status   = "ok"      if api_ok                          else "error"
+    api_label    = "Healthy" if api_ok                          else "Down"
+    ws_status    = "ok"      if st.session_state.ws_connected   else "warn"
     ws_label     = "Connected" if st.session_state.ws_connected else "Connecting"
-    kafka_status = "ok"    if total > 0 else "warn"
-    kafka_label  = "Producing" if total > 0 else "No messages"
-
+    kafka_status = "ok"      if total > 0                       else "warn"
+    kafka_label  = "Producing" if total > 0                     else "No messages"
     model_loaded  = api_data.get("model_loaded",  False)
     scaler_loaded = api_data.get("scaler_loaded", False)
 
@@ -607,7 +525,7 @@ with tab2:
                 <div class="infra-card-title">⚡ FastAPI Server</div>
                 <div class="status-pill {api_status}"><div class="status-dot"></div>{api_label}</div>
             </div>
-            <div class="infra-stat"><span class="infra-key">Endpoint</span><span class="infra-val">localhost:8000</span></div>
+            <div class="infra-stat"><span class="infra-key">Endpoint</span><span class="infra-val">{API_URL}</span></div>
             <div class="infra-stat"><span class="infra-key">Version</span><span class="infra-val">{api_data.get('version','—')}</span></div>
             <div class="infra-stat"><span class="infra-key">Model Loaded</span><span class="infra-val">{'✅ Yes' if model_loaded else '❌ No'}</span></div>
             <div class="infra-stat"><span class="infra-key">Scaler Loaded</span><span class="infra-val">{'✅ Yes' if scaler_loaded else '❌ No'}</span></div>
@@ -618,9 +536,9 @@ with tab2:
                 <div class="infra-card-title">📨 Kafka Broker</div>
                 <div class="status-pill {kafka_status}"><div class="status-dot"></div>{kafka_label}</div>
             </div>
-            <div class="infra-stat"><span class="infra-key">Broker</span><span class="infra-val">127.0.0.1:9092</span></div>
+            <div class="infra-stat"><span class="infra-key">Broker</span><span class="infra-val">{os.getenv('KAFKA_BOOTSTRAP_SERVERS','127.0.0.1:9092')}</span></div>
             <div class="infra-stat"><span class="infra-key">Mode</span><span class="infra-val">KRaft (no Zookeeper)</span></div>
-            <div class="infra-stat"><span class="infra-key">Topic</span><span class="infra-val">transactions</span></div>
+            <div class="infra-stat"><span class="infra-key">Topic</span><span class="infra-val">{os.getenv('KAFKA_TOPIC','transactions')}</span></div>
             <div class="infra-stat"><span class="infra-key">Messages Seen</span><span class="infra-val">{total:,}</span></div>
             <div class="infra-stat"><span class="infra-key">Partitions</span><span class="infra-val">1</span></div>
         </div>
@@ -629,7 +547,7 @@ with tab2:
                 <div class="infra-card-title">🔌 WebSocket</div>
                 <div class="status-pill {ws_status}"><div class="status-dot"></div>{ws_label}</div>
             </div>
-            <div class="infra-stat"><span class="infra-key">Endpoint</span><span class="infra-val">ws://127.0.0.1:8000/ws</span></div>
+            <div class="infra-stat"><span class="infra-key">Endpoint</span><span class="infra-val">{WS_URL}</span></div>
             <div class="infra-stat"><span class="infra-key">Status</span><span class="infra-val">{'Live stream' if st.session_state.ws_connected else 'Reconnecting'}</span></div>
             <div class="infra-stat"><span class="infra-key">Events Received</span><span class="infra-val">{total:,}</span></div>
             <div class="infra-stat"><span class="infra-key">Reconnect Policy</span><span class="infra-val">Auto · 3s</span></div>
@@ -638,20 +556,15 @@ with tab2:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── TRANSACTION VOLUME + LATENCY
     col_vol, col_lat = st.columns(2)
 
     with col_vol:
         st.markdown('<div class="ml-section-header">📈 Transaction Volume (Last 12 Intervals)</div>', unsafe_allow_html=True)
-
-        # Build rolling window bars from session data
         window = 10
         recent = list(txns)
         bars_html = '<div class="trend-bar-wrap">'
         for i in range(12):
-            chunk_start = i * window
-            chunk_end   = (i + 1) * window
-            chunk = recent[chunk_start:chunk_end]
+            chunk = recent[i*window:(i+1)*window]
             f_cnt = sum(1 for t in chunk if t.get("prediction") == 1)
             l_cnt = len(chunk) - f_cnt
             f_h = max(int(f_cnt * 8), 4)
@@ -665,7 +578,6 @@ with tab2:
         bars_html += '<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#f43f5e;border-radius:2px;display:inline-block;"></span>Fraud</span>'
         bars_html += '<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#10b981;border-radius:2px;display:inline-block;opacity:0.6;"></span>Legit</span>'
         bars_html += '</div>'
-
         st.markdown(f"""
         <div class="ml-card" style="margin-bottom:0;">
             <div class="ml-card-label">Volume Trend</div>
@@ -675,22 +587,19 @@ with tab2:
                 <div><div class="ml-card-label">Fraud</div><div style="font-family:DM Sans;font-weight:600;color:#f43f5e;">{fraud_count:,}</div></div>
                 <div><div class="ml-card-label">Fraud Rate</div><div style="font-family:DM Sans;font-weight:600;color:#f59e0b;">{fraud_rate:.1f}%</div></div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
 
     with col_lat:
         st.markdown('<div class="ml-section-header">⚡ API Latency (ms)</div>', unsafe_allow_html=True)
-
-        lat_bars = '<div class="trend-bar-wrap">'
         max_lat  = max(latencies) if latencies else 50
-        for lat in (list(latencies)[-12:] if len(latencies) >= 12 else latencies + [0]*(12-len(latencies))):
+        lat_list = list(latencies)[-12:] if len(latencies) >= 12 else latencies + [0]*(12-len(latencies))
+        lat_bars = '<div class="trend-bar-wrap">'
+        for lat in lat_list:
             h = max(int((lat / max(max_lat, 1)) * 55), 4)
             color = "#f43f5e" if lat > 100 else "#3b82f6" if lat > 50 else "#10b981"
             lat_bars += f'<div class="trend-bar" style="height:{h}px;flex:1;background:{color};opacity:0.8;border-radius:3px 3px 0 0;"></div>'
         lat_bars += '</div>'
-
         p95 = sorted(latencies)[int(len(latencies)*0.95)] if len(latencies) > 5 else 0
-
         st.markdown(f"""
         <div class="ml-card" style="margin-bottom:0;">
             <div class="ml-card-label">Latency Trend</div>
@@ -700,14 +609,11 @@ with tab2:
                 <div><div class="ml-card-label">Max</div><div style="font-family:DM Sans;font-weight:600;color:#f43f5e;">{max_latency:.1f} ms</div></div>
                 <div><div class="ml-card-label">P95</div><div style="font-family:DM Sans;font-weight:600;color:#f59e0b;">{p95:.1f} ms</div></div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── ALERT LOG
     st.markdown('<div class="ml-section-header">🔔 System Alert Log</div>', unsafe_allow_html=True)
-
     alerts = list(st.session_state.alert_log)
     if not alerts:
         alerts = [{"time": datetime.now().strftime("%H:%M:%S"), "level":"info", "msg":"System started — waiting for events"}]
@@ -723,9 +629,7 @@ with tab2:
             <span class="alert-badge {badge}">{label}</span>
             <span class="alert-msg">{a.get('msg','')}</span>
         </div>"""
-
     st.markdown(f'<div class="alert-log">{alert_rows}</div>', unsafe_allow_html=True)
-
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
