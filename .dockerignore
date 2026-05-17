@@ -13,6 +13,7 @@ data/
 # Notebooks — not needed in production image
 notebooks/
 *.ipynb
+*.log
 
 # MLflow runs — not needed in image
 mlruns/
@@ -29,3 +30,9 @@ tests/
 
 # VS Code
 .vscode/
+
+fraud_env/
+
+
+
+
